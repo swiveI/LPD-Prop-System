@@ -1,0 +1,23 @@
+{
+  "name": "com.localpolicedepartment.props",
+  "displayName": "LPD Prop System",
+  "version": "1.0.0",
+  "description": "Prop system for LPD and PJKT worlds",
+  "unity": "2022.3",
+  "author": {
+    "name": "karet"
+  },
+  "vpmDependencies": {
+    "com.vrchat.worlds": ">=3.5.0",
+	"com.localpolicedepartment.utilities"
+  },
+  "keywords": [
+    "vrchat",
+    "udon",
+    "udonsharp",
+    "worlds"
+  ],
+  "license": "MIT",
+  "changelogUrl": "",
+  "documentationUrl": ""
+}
