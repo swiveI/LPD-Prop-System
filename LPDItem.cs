@@ -1,5 +1,6 @@
 ﻿using UdonSharp;
 using UnityEngine;
+using VRC.SDKBase;
 
 namespace LocalPoliceDepartment.Props
 {
@@ -11,11 +12,30 @@ namespace LocalPoliceDepartment.Props
         [Tooltip("If True then only one of this item can be spawned for each player.")]
         public bool Exclusive;
         
+        [Header("Pickup Settings")]
+        [SerializeField] private Transform heldPosition;
+        [SerializeField] private VRC_Pickup.PickupOrientation pickupOrientation = VRC_Pickup.PickupOrientation.Any;
+        
         protected LPDProp prop;
         protected bool initialized = false;
     
-        public virtual void InitializeItem(LPDProp p) { prop = p; initialized = true; }
-        public virtual void OnCleanup() { }
+        public virtual void InitializeItem(LPDProp p)
+        {
+            prop = p;
+            if (heldPosition != null)
+            {
+                prop.PickupComp.orientation = pickupOrientation;
+                prop.PickupComp.ExactGun = heldPosition;
+                prop.PickupComp.ExactGrip = heldPosition;
+            }
+        }
+
+        public virtual void OnCleanup()
+        {
+            prop.PickupComp.orientation = VRC_Pickup.PickupOrientation.Any;
+            prop.PickupComp.ExactGun = null;
+            prop.PickupComp.ExactGrip = null;
+        }
         public virtual void OnItemNetworkUpdate(string args) { }
         public virtual void OnItemUpdateRequested(string args) { }
         public virtual void OnItemUsed() { }
