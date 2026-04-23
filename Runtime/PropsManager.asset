@@ -19,7 +19,7 @@ MonoBehaviour:
   sourceCsScript: {fileID: 11500000, guid: 5b7b179aaaf5fa1439df93fda73289aa, type: 3}
   scriptVersion: 2
   compiledVersion: 2
-  behaviourSyncMode: 0
+  behaviourSyncMode: 1
   hasInteractEvent: 0
   scriptID: 4566462068537954812
   serializationData:
@@ -92,8 +92,10 @@ MonoBehaviour:
       Data: 5|UnityEngine.HeaderAttribute, UnityEngine.CoreModule
     - Name: header
       Entry: 1
-      Data: Items that can be spawned. The items position in this array is its ItemID
-        number.
+      Data: 'Items that can be spawned.
+
+        The items position in this array
+        is its ItemID number.'
     - Name: 
       Entry: 8
       Data: 
@@ -162,7 +164,7 @@ MonoBehaviour:
       Data: 10|UnityEngine.TooltipAttribute, UnityEngine.CoreModule
     - Name: tooltip
       Entry: 1
-      Data: If checked then props will despawn when this game object is disabeld
+      Data: If checked then props will despawn when this game object is disabled
         or the PropsEnabled field is set to false.
     - Name: 
       Entry: 8

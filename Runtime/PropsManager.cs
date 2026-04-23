@@ -5,12 +5,13 @@ using VRC.SDKBase;
 
 namespace LocalPoliceDepartment.Props
 {
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class PropsManager : UdonSharpBehaviour
     {
-        [Header("Items that can be spawned. The items position in this array is its ItemID number.")]
+        [Header("Items that can be spawned.\nThe items position in this array is its ItemID number.")]
         public GameObject[] items;
 
-        [SerializeField, Tooltip("If checked then props will despawn when this game object is disabeld or the PropsEnabled field is set to false.")]
+        [SerializeField, Tooltip("If checked then props will despawn when this game object is disabled or the PropsEnabled field is set to false.")]
         private bool despawnPropsOnDisable;
 
         private LPDProp[] props;

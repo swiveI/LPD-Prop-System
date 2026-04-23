@@ -9,7 +9,8 @@
   },
   "vpmDependencies": {
     "com.vrchat.worlds": ">=3.5.0",
-	"com.localpolicedepartment.utilities"
+	"com.localpolicedepartment.utilities": ">=1.0.0",
+    "com.mmmaellon.smartobjectsync": ">=3.10.16"
   },
   "keywords": [
     "vrchat",

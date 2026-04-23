@@ -6,6 +6,10 @@ using VRC.Udon.Common.Interfaces;
 
 namespace LocalPoliceDepartment.Props
 {
+    /// <summary>
+    /// Designed to use manual sync but requires another object sync solution like smart object sync
+    /// continuous sync should be fine if using VRC object sync
+    /// </summary>
     [RequireComponent(typeof(VRC_Pickup))]
     public class LPDProp : UdonSharpBehaviour
     {
@@ -13,7 +17,7 @@ namespace LocalPoliceDepartment.Props
         [SerializeField] private PropsManager propsManager;
         [SerializeField] private BoxCollider boxCollider;
         [SerializeField] private SphereCollider sphereCollider;
-        [SerializeField] int decayTimer = 180;
+        //[SerializeField] int decayTimer = 180;
         private Rigidbody _rigidbody;
         
         /// <summary>
@@ -32,6 +36,7 @@ namespace LocalPoliceDepartment.Props
 
         //used for custom image/video/string loading
         [UdonSynced] private VRCUrl syncedUrl;
+        private string previousUrl = "";
         
         /// <summary>
         /// Returns the VRCUrl that is currently synced for this prop.
@@ -99,7 +104,12 @@ namespace LocalPoliceDepartment.Props
         /// </summary>
         public void ReleaseProp()
         {
+            if (!PropOwner.isLocal) return; //dont allow others to despawn my stuff
+            if (_itemBehaviour != null) _itemBehaviour.OnCleanup();
+            
             ItemId = -1;
+            syncedUrl = null;
+            ItemSerializedData = string.Empty;
             RequestSerialization();
             OnDeserialization();
         }
@@ -155,13 +165,18 @@ namespace LocalPoliceDepartment.Props
                 foreach (Transform child in transform) Destroy(child.gameObject);
                 currentItemId = ItemId;
                 
+                //reset settings that might have changed
+                _rigidbody.isKinematic = true;
+                _rigidbody.useGravity = false;
+                boxCollider.enabled = true;
+                sphereCollider.enabled = false;
+                PickupComp.pickupable = PropOwner.isLocal;
+                
                 //item changed to nothing
                 if (ItemId == -1)
                 {
                     Debug.Log("prop freed");
                     ItemSerializedData = "";
-                    _rigidbody.isKinematic = true;
-                    _rigidbody.useGravity = false;
                     transform.position = Vector3.down;
                     transform.rotation = Quaternion.identity;
                     return;
@@ -214,14 +229,41 @@ namespace LocalPoliceDepartment.Props
                 return;
             }
             
-            if (oldItemData == ItemSerializedData) return;
-            oldItemData = ItemSerializedData;
-
+            if (!DataUpdated()) return;
             if (_itemBehaviour != null)
             {
                 Debug.Log($"Prop updated with new data: {ItemSerializedData}");
                 _itemBehaviour.OnItemNetworkUpdate(ItemSerializedData);
             }
+        }
+
+        //returns true if the url or data string updated
+        private bool DataUpdated()
+        {
+            bool updated = false;
+            if (oldItemData != ItemSerializedData)
+            {
+                oldItemData = ItemSerializedData;
+                updated = true;
+            }
+            if (syncedUrl == null) return updated;
+            if (previousUrl != syncedUrl.ToString())
+            {
+                previousUrl = syncedUrl.ToString();
+                updated = true;
+            }
+            return updated;
+        }
+        
+        /// <summary>
+        /// Sets the box collider size and sphere collider radius for this prop.
+        /// This should be used if the default collider sizing based on the mesh bounds does not fit your item properly.
+        /// </summary>
+        /// <param name="size"></param>
+        public void SetBounds(Vector3 size)
+        {
+            boxCollider.size = size;
+            sphereCollider.radius = Mathf.Max(size.x, size.y, size.z) / 2f;
         }
 
         /// <summary>
@@ -235,7 +277,6 @@ namespace LocalPoliceDepartment.Props
             if (_itemBehaviour == null) return;
             _itemBehaviour.OnItemUpdateRequested(data);
         }
-        
         
         #region Passthrough Events
         public override void OnPickupUseDown()
