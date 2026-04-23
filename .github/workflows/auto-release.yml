@@ -105,6 +105,6 @@ jobs:
               owner: 'swiveI',
               repo: 'LPD-Tools',
               workflow_id: 'build-listing.yml',
-              ref: 'master',
+              ref: 'main',
             })
             console.log('✅ Triggered LPD-Tools build-listing workflow')
