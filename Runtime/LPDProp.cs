@@ -7,7 +7,7 @@ using VRC.Udon.Common.Interfaces;
 namespace LocalPoliceDepartment.Props
 {
     /// <summary>
-    /// Designed to use manual sync but requires another object sync solution like smart object sync
+    /// Designed to use manual sync but requires another object sync solution like smart object sync https://github.com/MMMaellon/SmartObjectSync
     /// continuous sync should be fine if using VRC object sync
     /// </summary>
     [RequireComponent(typeof(VRC_Pickup))]
@@ -17,8 +17,8 @@ namespace LocalPoliceDepartment.Props
         [SerializeField] private PropsManager propsManager;
         [SerializeField] private BoxCollider boxCollider;
         [SerializeField] private SphereCollider sphereCollider;
-        //[SerializeField] int decayTimer = 180;
         private Rigidbody _rigidbody;
+        private float pickupTimestamp = 0f;
         
         /// <summary>
         /// Generic data field to be used by items to sync data.
@@ -75,6 +75,7 @@ namespace LocalPoliceDepartment.Props
             _rigidbody = GetComponent<Rigidbody>();
             _rigidbody.isKinematic = true;
             _rigidbody.useGravity = false;
+            DisableInteractive = true; //start off but items can change this
             
             //tmp fix becuase vrchat shipped broken persistence
             SendCustomEventDelayedSeconds(nameof(OnDeserialization), 5);
@@ -89,6 +90,11 @@ namespace LocalPoliceDepartment.Props
         {
             _itemBehaviour = behaviour;
         }
+
+        public void LocalEnableInteraction() => DisableInteractive = false;
+        public void LocalDisableInteraction() => DisableInteractive = true;
+        public void RemoteEnableInteraction() => SendCustomNetworkEvent(NetworkEventTarget.Others, nameof(LocalEnableInteraction));
+        public void RemoteDisableInteraction() => SendCustomNetworkEvent(NetworkEventTarget.Others, nameof(LocalDisableInteraction));
 
         /// <summary>
         /// Returns the LPDItem script that is currently set as the behaviour for this prop. This is the script that will receive events when the item is used, picked up, dropped, or collides with something, as well as receive network updates.
@@ -105,6 +111,7 @@ namespace LocalPoliceDepartment.Props
         public void ReleaseProp()
         {
             if (!PropOwner.isLocal) return; //dont allow others to despawn my stuff
+            if (PickupComp.IsHeld) PickupComp.Drop();
             if (_itemBehaviour != null) _itemBehaviour.OnCleanup();
             
             ItemId = -1;
@@ -177,8 +184,11 @@ namespace LocalPoliceDepartment.Props
                 {
                     Debug.Log("prop freed");
                     ItemSerializedData = "";
+                    oldItemData = "";
                     transform.position = Vector3.down;
                     transform.rotation = Quaternion.identity;
+                    DisableInteractive = true;
+                    InteractionText = "";
                     return;
                 }
                 
@@ -224,6 +234,11 @@ namespace LocalPoliceDepartment.Props
                 if (_itemBehaviour != null)
                 {
                     Debug.Log($"Prop {item.name} initialized with data: {ItemSerializedData}");
+                    if (_itemBehaviour.CanBeStolen && !PropOwner.isLocal)
+                    {
+                        InteractionText = "Take";
+                        LocalEnableInteraction();
+                    }
                     _itemBehaviour.InitializeItem(this);
                 }
                 return;
@@ -286,11 +301,13 @@ namespace LocalPoliceDepartment.Props
         
         public override void OnPickupUseUp()
         {
+            if (Time.time - pickupTimestamp > .1f) return;
             if (_itemBehaviour != null) _itemBehaviour.OnItemStopUse();
         }
 
         public override void OnPickup()
         {
+            pickupTimestamp = Time.time;
             if (_itemBehaviour != null) _itemBehaviour.OnItemPickedUp();
         }
 
@@ -322,6 +339,22 @@ namespace LocalPoliceDepartment.Props
         private void OnDestroy()
         {
             if (_itemBehaviour != null) _itemBehaviour.OnCleanup();
+        }
+
+        public override void Interact()
+        {
+            if (_itemBehaviour != null)
+            {
+                _itemBehaviour.OnItemInteract();
+                if (_itemBehaviour.CanBeStolen && !PropOwner.isLocal)
+                {
+                    //spawn our own and have owner despawn theirs
+                    LPDProp newProp = propsManager.SpawnItem(currentItemId, transform.position, transform.rotation, ItemSerializedData, true);
+                    if (newProp == null) return;
+                    newProp.SetSyncedUrl(syncedUrl);
+                    SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReleaseProp));
+                }
+            }
         }
         #endregion
 

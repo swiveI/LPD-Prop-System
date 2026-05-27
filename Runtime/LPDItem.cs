@@ -16,6 +16,9 @@ namespace LocalPoliceDepartment.Props
         [SerializeField] private Transform heldPosition;
         [SerializeField] private VRC_Pickup.PickupOrientation pickupOrientation = VRC_Pickup.PickupOrientation.Any;
         
+        [Tooltip("If enabled, interactions will automatically be turned on and players interacting with this item will despawn it on the owner and spawn it for the interacting player")]
+        public bool CanBeStolen = false;
+        
         protected LPDProp prop;
         protected bool initialized = false;
     
@@ -35,13 +38,16 @@ namespace LocalPoliceDepartment.Props
             prop.PickupComp.orientation = VRC_Pickup.PickupOrientation.Any;
             prop.PickupComp.ExactGun = null;
             prop.PickupComp.ExactGrip = null;
+            prop.RemoteDisableInteraction();
         }
         public virtual void OnItemNetworkUpdate(string args) { }
         public virtual void OnItemUpdateRequested(string args) { }
+        
         public virtual void OnItemUsed() { }
         public virtual void OnItemStopUse() { }
         public virtual void OnItemDropped() { }
         public virtual void OnItemPickedUp() { }
+        public virtual void OnItemInteract() { }
         public virtual void OnCollideEnter(Collision other) { }
         public virtual void OnCollideExit(Collision other) { }
         public virtual void OnEnterTrigger(Collider other) { }
