@@ -17,6 +17,8 @@ namespace LocalPoliceDepartment.Props
         [SerializeField] private PropsManager propsManager;
         [SerializeField] private BoxCollider boxCollider;
         [SerializeField] private SphereCollider sphereCollider;
+        [SerializeField] private MeshCollider meshCollider;
+        //[SerializeField] int decayTimer = 180;
         private Rigidbody _rigidbody;
         private float pickupTimestamp = 0f;
         
@@ -177,7 +179,10 @@ namespace LocalPoliceDepartment.Props
                 _rigidbody.useGravity = false;
                 boxCollider.enabled = true;
                 sphereCollider.enabled = false;
+                meshCollider.enabled = false;
+                meshCollider.sharedMesh = null;
                 PickupComp.pickupable = PropOwner.isLocal;
+                DisableInteractive = !PropOwner.isLocal;
                 
                 //item changed to nothing
                 if (ItemId == -1)
@@ -279,6 +284,15 @@ namespace LocalPoliceDepartment.Props
         {
             boxCollider.size = size;
             sphereCollider.radius = Mathf.Max(size.x, size.y, size.z) / 2f;
+        }
+        
+        public void SetMeshCollider(Mesh collisionMesh)
+        {
+            boxCollider.enabled = false;
+            sphereCollider.enabled = false;
+            meshCollider.enabled = true;
+            meshCollider.sharedMesh = collisionMesh;
+            if (!_rigidbody.isKinematic) meshCollider.convex = true;
         }
 
         /// <summary>
